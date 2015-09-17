@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 #
 # Public release V0.2 by M.H. Jansen of Lorkeers
 #
@@ -451,8 +451,9 @@ class TLS:
 		cipher_suites = ""
 		if cipher == 0:
 			cipher_list = self.tlsCiphers()
-			for c in cipher_list.keys(): 
-				cipher_suites += c
+			for c in cipher_list.keys():
+                                if len(cipher_suites) < max_hello:
+				        cipher_suites += c
 		else:
 			for c in cipher.keys(): 
 				cipher_suites += c
@@ -673,7 +674,7 @@ def enumProtocols():
 	global supportedProtocols
 	supportedProtocols = []
 	protocols = ["TLSv1.3", "TLSv1.2", "TLSv1.1", "TLSv1.0", "SSLv3", "SSLv2"] # High to low 
-	for p in protocols: 
+	for p in protocols:
 		sock = tls.connect() # first connect
 		if preamble: # do preamble if required
 			if not doPreamble(sock, preamble):
@@ -690,8 +691,8 @@ def enumProtocols():
 				if (contentType[0] == 'handshake' and contentType[1] == 'server_hello') and (responseProtocol == p):
 					supportedProtocols.append(p)
 					print "    %s Remote service supports: %s" %(Icon.norm, p)
-		else:
-			break # prevent from 
+#		else:
+#			break # prevent from 
 		tls.closeConnection()
 	return supportedProtocols
 
@@ -781,6 +782,8 @@ def processTarget(target, internal=False):
 def main():
 	global preamble
 	global dport
+        global max_hello
+        max_hello = 1000 # arbitrary large number
 	dport = 443
 	try:
 		usage = 'usage: %prog -t <host>:<port> [ options ]'
@@ -792,6 +795,7 @@ def main():
 		parser.add_option("--smtp", action="store_true", help="Use SMTP as protocol layer", dest="smtp")
 		parser.add_option("--pop", action="store_true", help="Use POP as protocol layer", dest="pop")
 		parser.add_option("--imap", action="store_true", help="Use IMAP as protocol layer", dest="imap")
+                parser.add_option("--max", action="store", type="int", help="Maximum size in bytes of client hello")
 		(options, args) = parser.parse_args()
 		target = options.target
 		targetfile = options.file
@@ -809,6 +813,8 @@ def main():
 			dport = 993
 		else:
 			preamble = None
+                if options.max:
+                        max_hello = options.max
 		
 		print banner()
 		if target:
