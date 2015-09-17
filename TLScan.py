@@ -452,7 +452,7 @@ class TLS:
 		if cipher == 0:
 			cipher_list = self.tlsCiphers()
 			for c in cipher_list.keys():
-                                if len(cipher_suites) < max_hello:
+                                if ((len(cipher_suites) + len(record)) < max_hello):
 				        cipher_suites += c
 		else:
 			for c in cipher.keys(): 
@@ -470,6 +470,7 @@ class TLS:
 			handshake += struct.pack("!H", len(cipher_suites))
 			handshake += cipher_suites
 			handshake += compression
+                        print 'Length of handshake: {0}'.format(len(record+handshake))
 			return record+handshake
 		else:
 			print "%s Error in cipher length!" %Icon.error
